@@ -8,21 +8,22 @@ class Http {
     
     public function __construct()
     {
-        $this->http = new Swoole\Http\Server(self::HOST, self::PORT);
+        // $this->http = new Swoole\Http\Server(self::HOST, self::PORT);
+        $this->http = new swoole_http_server(self::HOST, self::PORT);
 
         $this->http->set([
             "enable_static_handler" => true,
             "document_root" => "/home/alex/study/thinkphp/public/static/",
-            'worker_num' => 4,
-            'task_worker_num' => 4,
+            'worker_num' => 2,
+            'task_worker_num' => 2,
 
         ]);
 
         $this->http->on("WorkerStart", [$this, 'onWorkerStart']);
         $this->http->on("request", [$this, 'onRequest']);
         $this->http->on("task", [$this, 'onTask']);
-        // $this->http->on("finish", [$this, 'onFinish']);
-        // $this->http->on("close", [$this, 'onClose']);
+        $this->http->on("finish", [$this, 'onFinish']);
+        $this->http->on("close", [$this, 'onClose']);
 
 
         $this->http->start();
@@ -88,7 +89,15 @@ class Http {
 
     public function onTask($serv, $taskId, $workerId, $data)
     {
-        try{
+        // task 
+        $obj = new app\common\task\Task;
+        if(!isset($data['method'])){
+            return false;
+        }
+        $method = $data['method'];
+        $flag = $obj->$method($data['data']);
+    
+        /*try{
             // send code ali server 
             $send = new app\index\controller\Send();
             $result = $send::sendRedis($data['phone'], $data['code']);
@@ -96,21 +105,22 @@ class Http {
             // todo
             // return Util::show(config('code.error'),'inter error'); 
             echo $e->getMessage();
-        }
-        print_r($result);
-        return "on task finish";
+        }*/
+        
+        return $flag;
 
     }
 
-    // public function onFinish($serv, $taskId, $workerId, $data)
-    // {
-        
-    // }
+    public function onFinish($serv, $taskId, $data)
+    {
+        echo "taskId:{$taskId}\n";
+        echo "finish-data-success:{$data}\n";
+    }
 
-    // public function onClose($serv, $taskId, $workerId, $data)
-    // {
-        
-    // }
+    public function onClose($ws, $fd)
+    {
+        echo "client {$fd} closed\n";
+    }
 
 }
 

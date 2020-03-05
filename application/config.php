@@ -250,6 +250,7 @@ return [
     'redis'                 => [
         'host'      => '127.0.0.1',
         'port'      => 6379,
-        'time_out'  => 120,
+        'expired'  => 120,
+        'time_out' => 5,
     ],
 ];
